@@ -14,12 +14,12 @@ assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
 all: $(kernel)
 
 clean: 
-			@rm -r build
+			@rm -r build 2> /dev/null || true
 
 run-iso: $(iso)
 			@qemu-system-x86_64 -cdrom $(iso)
 
-# Requries root to build -> run as root
+# Requries root to build fat32
 run-fat32: $(fat32)
 			@qemu-system-x86_64 -s -drive format=raw,file=$(fat32) -serial stdio
 
