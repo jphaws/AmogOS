@@ -3,6 +3,7 @@ kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 fat32 := build/os-$(arch).img
 owner := $(shell stat -c '%U' .)
+group := $(shell stat -c '%G' .)
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
@@ -46,7 +47,7 @@ $(fat32): $(kernel) $(grub_cfg)
 			@losetup -d /dev/loop1
 			@rm -r build/.img
 			@rm -r /mnt/fatgrub
-			@chown -R $(owner):$(owner) build
+			@chown -R $(owner):$(group) build
 
 iso: $(iso)
 
