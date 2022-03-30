@@ -1,6 +1,8 @@
 arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
+fat32 := build/os-$(arch).img
+owner := $(shell stat -c '%U' .)
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
@@ -14,8 +16,37 @@ all: $(kernel)
 clean: 
 			@rm -r build
 
-run: $(iso)
+run-iso: $(iso)
 			@qemu-system-x86_64 -cdrom $(iso)
+
+# Requries root to build -> run as root
+run-fat32: $(fat32)
+			@qemu-system-x86_64 -s -drive format=raw,file=$(fat32) -serial stdio
+
+fat32: $(fat32)
+
+# Requries root to build -> run as root
+$(fat32): $(kernel) $(grub_cfg)
+			@mkdir -p build/.img/boot/grub
+			@cp $(kernel) build/.img/boot/kernel.bin
+			@cp $(grub_cfg) build/.img/boot/grub
+			@dd if=/dev/zero of=$(fat32) bs=512 count=32768
+			@parted $(fat32) mklabel msdos
+			@parted $(fat32) mkpart primary fat32 2048s 30720s
+			@parted $(fat32) set 1 boot on
+			@losetup /dev/loop0 $(fat32)
+			@losetup /dev/loop1 $(fat32) -o 1048576
+			@mkdosfs -F32 -f 2 /dev/loop1
+			@mkdir -p /mnt/fatgrub
+			@mount /dev/loop1 /mnt/fatgrub
+			@grub-install --target=i386-pc --root-directory=/mnt/fatgrub --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/loop0
+			@cp -r build/.img/* /mnt/fatgrub
+			@umount /mnt/fatgrub
+			@losetup -d /dev/loop0
+			@losetup -d /dev/loop1
+			@rm -r build/.img
+			@rm -r /mnt/fatgrub
+			@chown -R $(owner):$(owner) build
 
 iso: $(iso)
 
@@ -23,7 +54,7 @@ $(iso): $(kernel) $(grub_cfg)
 			@mkdir -p build/isofiles/boot/grub
 			@cp $(kernel) build/isofiles/boot/kernel.bin
 			@cp $(grub_cfg) build/isofiles/boot/grub
-			@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
+			@grub-mkrescue -o $(iso) build/isofiles #2> /dev/null
 			@rm -r build/isofiles
 
 $(kernel): $(assembly_object_files) $(linker_script)
