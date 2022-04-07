@@ -28,26 +28,7 @@ fat32: $(fat32)
 
 # Requries root to build -> run as root
 $(fat32): $(kernel) $(grub_cfg)
-			@mkdir -p build/.img/boot/grub
-			@cp $(kernel) build/.img/boot/kernel.bin
-			@cp $(grub_cfg) build/.img/boot/grub
-			@dd if=/dev/zero of=$(fat32) bs=512 count=32768
-			@parted $(fat32) mklabel msdos
-			@parted $(fat32) mkpart primary fat32 2048s 30720s
-			@parted $(fat32) set 1 boot on
-			@losetup /dev/loop0 $(fat32)
-			@losetup /dev/loop1 $(fat32) -o 1048576
-			@mkdosfs -F32 -f 2 /dev/loop1
-			@mkdir -p /mnt/fatgrub
-			@mount /dev/loop1 /mnt/fatgrub
-			@grub-install --target=i386-pc --root-directory=/mnt/fatgrub --no-floppy --modules="normal part_msdos ext2 multiboot" /dev/loop0
-			@cp -r build/.img/* /mnt/fatgrub
-			@umount /mnt/fatgrub
-			@losetup -d /dev/loop0
-			@losetup -d /dev/loop1
-			@rm -r build/.img
-			@rm -r /mnt/fatgrub
-			@chown -R $(owner):$(group) build
+			./buildfat32.sh $@ $^ $(arch)
 
 iso: $(iso)
 
