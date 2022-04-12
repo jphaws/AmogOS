@@ -13,59 +13,47 @@ The objective of this milestone is to actually be able to produce some form of d
       - Now you can write most of the rest of your kernel in C!
   2. VGA Console Driver. There are many ways to design your VGA API, but at a minimum you need to support functionally equivalent to the following:
 
-    ```
-    extern void VGA_clear(void);
-    extern void VGA_display_char(char);
-    extern void VGA_display_str(const char *);
-    ```
+      ```C
+      extern void VGA_clear(void);
+      extern void VGA_display_char(char);
+      extern void VGA_display_str(const char *);
+      ```
 
-    The VGA console is memory-mapped at address 0xb8000. Each character is stored as one 16 bit value in [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order). The entire screen is 80x25.
+      The VGA console is memory-mapped at address 0xb8000. Each character is stored as one 16 bit value in [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order). The entire screen is 80x25.
 
-    Refer to the [Wikipedia article on VGA-compatible text mode](https://en.wikipedia.org/wiki/VGA-compatible_text_mode) for details on displaying a particular character at a particular spot on the screen. You will need to manually scroll the text as well as return the cursor to the beginning of the line when you encounter a newline character.
+      Refer to the [Wikipedia article on VGA-compatible text mode](https://en.wikipedia.org/wiki/VGA-compatible_text_mode) for details on displaying a particular character at a particular spot on the screen. You will need to manually scroll the text as well as return the cursor to the beginning of the line when you encounter a newline character.
 
-    You may find is useful to implement some of the basic string and memory manipulation functions from the C standard library:
+      You may find is useful to implement some of the basic string and memory manipulation functions from the C standard library:
 
-    ```
-    extern void *memset(void *dst, int c, size_t n);
-    extern void *memcpy(void *dest, const void *src, size_t n);
-    extern size_t strlen(const char *s);
-    extern char *strcpy(char *dest, const char *src);
-    extern int strcmp(const char *s1, const char *s2);
-    extern const char *strchr(const char *s, int c);
-    extern char *strdup(const char *s);
-    ```
+      ```C
+      extern void *memset(void *dst, int c, size_t n);
+      extern void *memcpy(void *dest, const void *src, size_t n);
+      extern size_t strlen(const char *s);
+      extern char *strcpy(char *dest, const char *src);
+      extern int strcmp(const char *s1, const char *s2);
+      extern const char *strchr(const char *s, int c);
+      extern char *strdup(const char *s);
+      ```
 
   3. Call VGA_display_char() from kmain to test it!
   4. Implement printk, which works just like printf except inside the kernel. The full set of format specifiers you support is up to you, but you must support:
 
-    ```
-    %% %d %u %x %c %p %h[dux] %l[dux] %q[dux] %s
-    ```
+      ```C
+      %% %d %u %x %c %p %h[dux] %l[dux] %q[dux] %s
+      ```
 
-    If you include the gcc specific printf format attribute in your function declaration you will get all the warnings about incorrect format specifiers (I strongly suggest doing this):
+      If you include the gcc specific printf format attribute in your function declaration you will get all the warnings about incorrect format specifiers (I strongly suggest doing this):
 
-    ```
-    extern int printk(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-    ```
+      ```C
+      extern int printk(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+      ```
 
-    Lastly, I suggest creating individual functions to print each type of data and let printk focus on parsing the format string. For example:
+      Lastly, I suggest creating individual functions to print each type of data and let printk focus on parsing the format string. For example:
 
-    ```
-    extern void print_char(char);
-    extern void print_str(const char *);
-    extern void print_uchar(unsigned char);
-    extern void print_short(short);
-    extern void print_long_hex(long);
-    ```
-## Boot your OS in long mode
-The objective here is to get your OS to boot in protected mode with GRUB and multiboot, then switch to long mode. Proof is outputting a message to the VGA console. Ensure you are up-to-date on all class readings. The following two tutorials will guide you through accomplishing this milestone:
-
- 1. [A minimal x86 kernel](https://os.phil-opp.com/multiboot-kernel/) - Takes you through a boot overview view multiboot, demonstrates the special steps needs to compile your kernel, packages your kernel into an ISO image, boots it, and then helps you write a makefile to streamline the process.
-    - #### Note 1 - Don't skip the makefile! It will be invaluable all quarter.
-    - #### Note 2 - Consider using a FAT32 disk image instead of ISO. This will be necessary later in the quarter when you implement FAT32 support for your OS.
-    - #### Note 3 - The tutorial is focused on Rust, but this portion is language agnostic.
- 2. [Entering Long Mode](https://os.phil-opp.com/entering-longmode/) - Takes you through transitioning the CPU into long mode, including creation of a starting stack, page table, and global descriptor table.
-    - #### Note 1 - The tutorial is focused on Rust, but this portion is language agnostic.
-
-### Testing
-The demo of this milestone is straightforward. I'm looking for the hard-coded "OK" output (or similar) to the VGA console. I'll also briefly review your assembly to ensure you are actually in long mode.
+      ```C
+      extern void print_char(char);
+      extern void print_str(const char *);
+      extern void print_uchar(unsigned char);
+      extern void print_short(short);
+      extern void print_long_hex(long);
+      ```
