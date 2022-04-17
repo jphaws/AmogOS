@@ -52,4 +52,4 @@ build/arch/$(arch)/%.o: src/arch/$(arch)/%.asm
 
 # compile C files
 build/arch/$(arch)/%.o: src/arch/$(arch)/%.c
-			@/home/jaxon/opt/cross/bin/x86_64-elf-gcc -c -g $< -o $@
+			@/home/jaxon/opt/cross/bin/x86_64-elf-gcc -Wall -Werror -c -g $< -o $@
