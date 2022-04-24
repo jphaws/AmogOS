@@ -2,6 +2,8 @@
 #include "vga.h"
 #include "commonlib.h"
 #include "commonio.h"
+#include "ps2.h"
+#include "keyboard.h"
 
 void kmain(){
    int ptr = 7;
@@ -27,5 +29,9 @@ void kmain(){
    printk("X_Long Long: 0x%qx\n", (unsigned long long)4294967297);
    printk("String: %s\n", GNU);
    printk("Zero: %d\n", 0);
+
+   initialize_PS2_controller();
+   initialize_keyboard();
+
 }
 
