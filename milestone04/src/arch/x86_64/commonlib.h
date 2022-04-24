@@ -1,3 +1,6 @@
+#ifndef __COMMON_LIB_H__
+#define __COMMON_LIB_H__
+
 #include <stddef.h>
 
 void *memset(void *dst, int c, size_t n);
@@ -15,3 +18,5 @@ void lutoa(unsigned long value, char *str);
 void ltoa(long value, char *str);
 void itohex(unsigned int value, char *str);
 void ltohex(unsigned long value, char *str);
+
+#endif
