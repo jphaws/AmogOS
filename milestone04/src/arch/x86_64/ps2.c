@@ -41,36 +41,37 @@ static inline uint8_t inb(uint16_t port){
    return ret;
 }
 
-void ps2_poll_write_status(void){
-   uint8_t status = inb(PS2_DATA);
-
-   while (status & PS2_STATUS_INPUT)
-      status = inb(PS2_STATUS);
-
-   printk("   Status: 0x%x\n", status);
-}
-
-
-static void ps2_poll_read_status(void){
+uint8_t ps2_poll_read(uint16_t port){
    uint8_t status = inb(PS2_STATUS);
 
    while (!(status & PS2_STATUS_OUTPUT))
       status = inb(PS2_STATUS);
 
    printk("   Status: 0x%x\n", status);
+
+   return inb(port);
 }
 
-void disable_devices(){
+
+void ps2_poll_write(uint16_t port, uint8_t val){
+   uint8_t status = inb(PS2_STATUS);
+
+   while (status & PS2_STATUS_INPUT)
+      status = inb(PS2_STATUS);
+
+   printk("   Status: 0x%x\n", status);
+   outb(port, val);
+}
+
+static void disable_devices(){
 
    printk("Start devices disabled: \n");
-   ps2_poll_write_status();
-   outb(PS2_CMD, PS2_CHANNEL_1);
+   ps2_poll_write(PS2_CMD, PS2_CHANNEL_1);
 
-   ps2_poll_write_status();
-   outb(PS2_CMD, PS2_CHANNEL_2);
+   ps2_poll_write(PS2_CMD, PS2_CHANNEL_2);
 }
 
-void flush_output_buffer(){
+static void flush_output_buffer(){
    uint8_t status = inb(PS2_DATA);
 
    printk("Start buffer flushed:\n");
@@ -79,7 +80,7 @@ void flush_output_buffer(){
       status = inb(PS2_DATA);
 }
 
-void set_configuration_byte(){
+static void set_configuration_byte(){
    uint8_t config = inb(PS2_CONTROLLER_CONFIG);
 
    printk("Start configuration byte:\n");
@@ -88,24 +89,21 @@ void set_configuration_byte(){
    config |= PS2_DISABLE_CONFIG_MASK_OR;
    config &= PS2_DISABLE_CONFIG_MASK_AND;
 
-   ps2_poll_write_status();
-   outb(PS2_CMD, config);
+   ps2_poll_write(PS2_CMD, config);
    printk("   Configuration byte sent: 0x%x\n", config);
 
 }
 
-void controller_self_test(){
+static void controller_self_test(){
    uint8_t test;
 
    printk("Start controller self test:\n");
 
-   ps2_poll_write_status();
-   outb(PS2_CMD, 0xAA);
+   ps2_poll_write(PS2_CMD, 0xAA);
 
    printk("   Sent PS2 controller self test byte\n");
 
-   ps2_poll_read_status();
-   test = inb(PS2_DATA);
+   test = ps2_poll_read(PS2_DATA);
 
    if (test != 0x55)
       printk("   PS2 Controller failed self test\n");
@@ -114,25 +112,25 @@ void controller_self_test(){
 
 }
 
-void interface_tests(){
+static void interface_tests(){
    uint8_t test;
 
    printk("Start interface test:\n");
 
-   ps2_poll_write_status();
-   outb(PS2_CMD, PS2_TEST_FIRST_PORT);
+   ps2_poll_write(PS2_CMD, PS2_TEST_FIRST_PORT);
 
-   ps2_poll_read_status();
-   test = inb(PS2_DATA);
+   printk("   Test byte sent\n");
+
+   test = ps2_poll_read(PS2_DATA);
 
    if (test != 0)
       printk("   Interface test failed\n");
    printk("   Interface test byte: 0x%x\n", test);
 }
 
-void enable_devices(){
-   ps2_poll_write_status();
-   outb(PS2_CMD, PS2_ENABLE_FIRST_PORT);
+static void enable_devices(){
+   printk("Begin enable PS2 Controller:\n");
+   ps2_poll_write(PS2_CMD, PS2_ENABLE_FIRST_PORT);
 }
 
 void initialize_PS2_controller(){
