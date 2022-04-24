@@ -1,4 +1,3 @@
-// #include "keyboard.h"
 #include "vga.h"
 #include "commonlib.h"
 #include "commonio.h"
@@ -8,6 +7,6 @@
 void kmain(){
    initialize_PS2_controller();
    initialize_keyboard();
-
+   keyboard_poll();
 }
 
