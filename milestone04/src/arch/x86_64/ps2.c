@@ -47,7 +47,7 @@ uint8_t ps2_poll_read(uint16_t port){
    while (!(status & PS2_STATUS_OUTPUT))
       status = inb(PS2_STATUS);
 
-   printk("   Status: 0x%x\n", status);
+   // printk("   Status: 0x%x\n", status);
 
    return inb(port);
 }
@@ -59,7 +59,7 @@ void ps2_poll_write(uint16_t port, uint8_t val){
    while (status & PS2_STATUS_INPUT)
       status = inb(PS2_STATUS);
 
-   printk("   Status: 0x%x\n", status);
+   // printk("   Status: 0x%x\n", status);
    outb(port, val);
 }
 
