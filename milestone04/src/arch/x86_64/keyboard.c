@@ -10,11 +10,125 @@
 #define KEYBOARD_ACK 0xFA
 #define KEYBOARD_RESET_SUCCESS 0xAA
 #define KEYBOARD_SCAN_CODE 0xF0
-#define KEYBOARD_SET_SCAN_CODE_2 2
-#define KEYBOARD_GET_SCAN_CODE_2 0x41
+#define KEYBOARD_SET_SCAN_CODE_SET 2
 #define KEYBOARD_ENABLE_SCANNING 0xF4
 
-enum state{SHIFT, ALT, CTRL, CAPS};
+#define MAX_SCAN_CODE 0x58
+
+#define L_SHIFT_PRESSED 0x2A
+#define L_SHIFT_RELEASED 0xAA
+#define R_SHIFT_PRESSED 0x36
+#define R_SHIFT_RELEASED 0xB6
+#define CAPS_PRESSED 0x3A
+
+typedef enum state_mod STATE_MOD;
+enum state_mod{DEFAULT, SHIFT, CAPS, SHIFT_CAPS};
+
+STATE_MOD state = DEFAULT;
+
+char scan_codes[] = {
+   '\0', '\0', '1', '2', 
+   '3', '4', '5', '6', 
+   '7', '8', '9', '0', 
+   '-', '=', '\0', '\t', 
+   'q', 'w', 'e', 'r', 
+   't', 'y', 'u', 'i', 
+   'o', 'p', '[', ']', 
+   '\n', '\0', 'a', 's', 
+   'd', 'f', 'g', 'h', 
+   'j', 'k', 'l', ';', 
+   '\'', '`', '\0', '\\', 
+   'z', 'x', 'c', 'v', 
+   'b', 'n', 'm', ',', 
+   '.', '/', '\0', '*', 
+   '\0', ' ', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '7', 
+   '8', '9', '-', '4', 
+   '5', '6', '+', '1', 
+   '2', '3', '0', '.', 
+   '\0', '\0', '\0', '\0', 
+   '\0'
+}; //support through f12
+
+char scan_codes_shift[] = {
+   '\0', '\0', '!', '@', 
+   '#', '$', '%', '&', 
+   '&', '*', '(', ')', 
+   '_', '+', '\0', '\t', 
+   'Q', 'W', 'E', 'R', 
+   'T', 'Y', 'U', 'I', 
+   'O', 'P', '{', '}', 
+   '\n', '\0', 'A', 'S', 
+   'D', 'F', 'G', 'H', 
+   'J', 'K', 'L', ':', 
+   '"', '~', '\0', '|', 
+   'Z', 'X', 'C', 'V', 
+   'B', 'N', 'M', '<', 
+   '>', '?', '\0', '*', 
+   '\0', ' ', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '7', 
+   '8', '9', '-', '4', 
+   '5', '6', '+', '1', 
+   '2', '3', '0', '.', 
+   '\0', '\0', '\0', '\0', 
+   '\0'
+};
+
+char scan_codes_caps[] = {
+   '\0', '\0', '1', '2', 
+   '3', '4', '5', '6', 
+   '7', '8', '9', '0', 
+   '-', '=', '\0', '\t', 
+   'Q', 'W', 'E', 'R', 
+   'T', 'Y', 'U', 'I', 
+   'O', 'P', '[', ']', 
+   '\n', '\0', 'A', 'S', 
+   'D', 'F', 'G', 'H', 
+   'J', 'K', 'L', ';', 
+   '\'', '`', '\0', '\\', 
+   'Z', 'X', 'C', 'V', 
+   'B', 'N', 'M', ',', 
+   '.', '/', '\0', '*', 
+   '\0', ' ', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '7', 
+   '8', '9', '-', '4', 
+   '5', '6', '+', '1', 
+   '2', '3', '0', '.', 
+   '\0', '\0', '\0', '\0', 
+   '\0'
+};
+
+char scan_codes_shift_caps[] = {
+   '\0', '\0', '!', '@', 
+   '#', '$', '%', '&', 
+   '&', '*', '(', ')', 
+   '_', '+', '\0', '\t', 
+   'q', 'w', 'e', 'r', 
+   't', 'y', 'u', 'i', 
+   'o', 'p', '{', '}', 
+   '\n', '\0', 'a', 's', 
+   'd', 'f', 'g', 'h', 
+   'j', 'k', 'l', ':', 
+   '\"', '~', '\0', '|', 
+   'z', 'x', 'c', 'v', 
+   'b', 'n', 'm', '<', 
+   '>', '?', '\0', '*', 
+   '\0', ' ', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '\0', 
+   '\0', '\0', '\0', '7', 
+   '8', '9', '-', '4', 
+   '5', '6', '+', '1', 
+   '2', '3', '0', '.', 
+   '\0', '\0', '\0', '\0', 
+   '\0'
+};
 
 void reset_keyboard(void){
    uint8_t test;
@@ -54,10 +168,29 @@ void set_scan_code(void){
    do {
 
       printk("   set scan code 2\n");
-      ps2_poll_write(PS2_DATA, KEYBOARD_SET_SCAN_CODE_2);
+      ps2_poll_write(PS2_DATA, KEYBOARD_SET_SCAN_CODE_SET);
 
       response = ps2_poll_read(PS2_DATA);
    } while (response != KEYBOARD_ACK); 
+
+   do {
+
+      printk("   enter scan code command\n");
+      ps2_poll_write(PS2_DATA, KEYBOARD_SCAN_CODE);
+
+      response = ps2_poll_read(PS2_DATA);
+   } while (response != KEYBOARD_ACK); 
+
+   do {
+
+      printk("   reading current scan code\n");
+      ps2_poll_write(PS2_DATA, 0);
+
+      response = ps2_poll_read(PS2_DATA);
+   } while (response != KEYBOARD_ACK); 
+
+   response = ps2_poll_read(PS2_DATA);
+   printk("   Keyboard is using scancode: 0x%x\n", response);
 
 }
 
@@ -86,6 +219,57 @@ void initialize_keyboard(void){
    printk("Finished keyboard initialization\n");
 }
 
-void keyboard_poll(void){
+void modify_state(uint8_t code){
+   switch(state){
+      case SHIFT:
+         if (code == L_SHIFT_RELEASED || code == R_SHIFT_RELEASED)
+            state = DEFAULT;
+         else if (code == CAPS_PRESSED)
+            state = SHIFT_CAPS;
+         break;
+      case CAPS:
+         if (code == L_SHIFT_PRESSED || code == R_SHIFT_PRESSED)
+            state = SHIFT_CAPS;
+         else if (code == CAPS_PRESSED)
+            state = DEFAULT;
+         break;
+      case SHIFT_CAPS:
+         if (code == CAPS_PRESSED)
+            state = SHIFT;
+         else if (code == L_SHIFT_RELEASED || code == R_SHIFT_RELEASED)
+            state = CAPS;
+         break;
+      case DEFAULT:
+         if (code == L_SHIFT_PRESSED || code == R_SHIFT_PRESSED)
+            state = SHIFT;
+         else if (code == CAPS_PRESSED)
+            state = CAPS;
+         break;
+   }
+}
 
+void keyboard_read(void){
+   uint8_t code;
+   code = ps2_poll_read(PS2_DATA);
+
+   modify_state(code);
+
+   switch(state){
+      case SHIFT:
+         if (code <= MAX_SCAN_CODE && scan_codes_shift[code] != '\0')
+            printk("%c", scan_codes_shift[code]);
+         break;
+      case CAPS:
+         if (code <= MAX_SCAN_CODE && scan_codes_caps[code] != '\0')
+            printk("%c", scan_codes_caps[code]);
+         break;
+      case SHIFT_CAPS:
+         if (code <= MAX_SCAN_CODE && scan_codes_shift_caps[code] != '\0')
+            printk("%c", scan_codes_shift_caps[code]);
+         break;
+      case DEFAULT:
+         if (code <= MAX_SCAN_CODE && scan_codes[code] != '\0')
+            printk("%c", scan_codes[code]);
+         break;
+   }
 }

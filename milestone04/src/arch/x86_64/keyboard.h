@@ -2,6 +2,6 @@
 #define __KEYBOARD_H__
 
 void initialize_keyboard(void);
-void keyboard_poll(void);
+void keyboard_read(void);
 
 #endif
