@@ -7,6 +7,7 @@
 void kmain(){
    initialize_PS2_controller();
    initialize_keyboard();
-   keyboard_poll();
+   while(1)
+      keyboard_read();
 }
 
