@@ -1,6 +1,8 @@
 #include <stdint-gcc.h>
 #include "vga.h"
 #include "commonlib.h"
+#include "inline.h"
+#include <stdbool.h>
 
 #define VGA_BASE 0xb8000
 
@@ -30,6 +32,10 @@ void VGA_clear(void){
 }
 
 void VGA_display_char(char c){
+   bool enable_ints = 0;
+   if (are_interrupts_enabled())
+      STI
+
    if (c == '\n') {
       cursor = (LINE(cursor) + 1) * width;
       if (cursor >= width*height)
@@ -43,6 +49,9 @@ void VGA_display_char(char c){
       if (cursor >= width * height)
          scroll();
    }
+
+   if (enable_ints)
+      CLI
 }
 
 void VGA_display_str(const char *str){
