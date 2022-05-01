@@ -3,6 +3,7 @@
 #include "irq.h"
 #include "inline.h"
 #include "commonio.h"
+#include "keyboard.h"
 
 #define PIC1		0x20		/* IO base address for primary PIC */
 #define PIC2		0xA0		/* IO base address for chained PIC */
@@ -13,7 +14,7 @@
 
 #define PIC_EOI		0x20		/* End-of-interrupt command code */
 #define PIC_MASTER_REMAP 0x20
-#define PIC_CHAINED_REMAP 0x2F
+#define PIC_CHAINED_REMAP 0x28
 
 #define ICW1_ICW4	0x01		/* ICW4 (not) needed */
 #define ICW1_SINGLE	0x02		/* Single (cascade) mode */
@@ -71,7 +72,8 @@ static idtr_t idtr;
 
 extern void IRQ_init(void){
    CLI
-   // PIC_remap(PIC_MASTER_REMAP,PIC_CHAINED_REMAP);
+   IRQ_set_mask(0);
+   PIC_remap(PIC_MASTER_REMAP, PIC_CHAINED_REMAP);
    idtr.base = (uintptr_t)&IDT[0];
    idtr.limit = (sizeof(IDT) - 1);
 
@@ -90,7 +92,8 @@ extern void IRQ_init(void){
       descriptor->target_offset_upper = ((uint64_t)isr_ptr >> 32) & 0xFFFFFFFF;
       descriptor->reserved_32 = 0;
    }
-   __asm__ volatile ("lidt %0" : : "m"(idtr)); // load the new IDT
+
+   lidt(&IDT[0], sizeof(IDT) - 1);        // load the new IDT
    STI
 }
 
@@ -174,8 +177,13 @@ void PIC_remap(int offset1, int offset2){
 }
 
 extern void exception_handler(int isr_num, int err_code) {
-   printk("Encountered interrupt #%d (Error code 0x%x). We're handling an interrupt for you! :)\n", isr_num, err_code);
-
-   // __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+   if (isr_num == 0x21){
+      keyboard_read();
+   }
+   else{
+      printk("Encountered exception #%d (Error code 0x%x). :()\n", isr_num, err_code);
+      __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+   }
+   PIC_sendEOI(isr_num);
 }
 

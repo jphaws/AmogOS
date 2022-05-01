@@ -4,11 +4,18 @@
 #include "commonlib.h"
 
 #define TSS_64_BIT 0x9
+#define STACK_SIZE 4096
+
+#define PF_INDEX 1
+#define DF_INDEX 2
+#define GP_INDEX 3
+
+extern void reloadSegments();
 
 struct TSS {
    uint32_t ign1;       // ignored/reserved
    uint64_t rsp[3];     // Stack pointers
-   uint64_t ign2;       // ignored/reserved
+   uint64_t ign2;       // ignored/reserved uint64_t ist[7];     
    uint64_t ist[7];     // Interrupt stack table
    uint64_t ign3;       // ignored/reserved
    uint16_t ign4;       // ignored/reserved
@@ -69,17 +76,21 @@ struct GDT_Segments {
 static struct GDT_Segments GDT;
 static struct TSS TSS;
 
+static uint8_t *tss_stack_gp[STACK_SIZE];
+static uint8_t *tss_stack_df[STACK_SIZE];
+static uint8_t *tss_stack_pf[STACK_SIZE];
+
 void initialize_gdt(void){
    memset(&GDT, 0, sizeof(GDT));
 
    // null entry set to all 0
-
    //set the code segment bits
    GDT.CodeSegment.s = 1; 
    GDT.CodeSegment.ex = 1; 
    GDT.CodeSegment.rw = 1; 
-   GDT.CodeSegment.l = 1;
    GDT.CodeSegment.p = 1; 
+   GDT.CodeSegment.l = 1;
+   GDT.CodeSegment.g = 1;
 
    //set the TSS bits
    GDT.TSS.base1 = ((uint64_t)(&TSS)) & 0xFFFF;
@@ -92,5 +103,12 @@ void initialize_gdt(void){
    GDT.TSS.p = 1;
 
    //load the updated GDT
-   lgdt(&GDT, sizeof(GDT));
+   lgdt(&GDT, sizeof (GDT));
+   reloadSegments();
+}
+
+void initialize_tss(void){
+   TSS.ist[GP_INDEX] = (uint64_t) &(tss_stack_gp[STACK_SIZE - 1]);
+   TSS.ist[DF_INDEX] = (uint64_t) &(tss_stack_df[STACK_SIZE - 1]);
+   TSS.ist[PF_INDEX] = (uint64_t) &(tss_stack_pf[STACK_SIZE - 1]);
 }

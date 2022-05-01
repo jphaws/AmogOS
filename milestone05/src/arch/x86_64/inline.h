@@ -19,6 +19,16 @@ static inline void lgdt(void *base, uint16_t size){
    asm ("lgdt %0" : : "m"(GDTR));
 }
 
+static inline void lidt(void* base, uint16_t size)
+{   // This function works in 32 and 64bit mode
+    struct {
+        uint16_t length;
+        void*    base;
+    } __attribute__((packed)) IDTR = { size, base };
+
+    asm ( "lidt %0" : : "m"(IDTR) );  // let the compiler choose an addressing mode
+}
+
 static inline void outb(uint16_t port, uint8_t val){
    asm volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
