@@ -13,7 +13,7 @@
 #define PIC2_DATA	(PIC2+1)
 
 #define PIC_EOI		0x20		/* End-of-interrupt command code */
-#define PIC_MASTER_REMAP 0x20
+#define PIC_PRIMARY_REMAP 0x20
 #define PIC_CHAINED_REMAP 0x28
 
 #define ICW1_ICW4	0x01		/* ICW4 (not) needed */
@@ -73,7 +73,7 @@ static idtr_t idtr;
 extern void IRQ_init(void){
    CLI
    IRQ_set_mask(0);
-   PIC_remap(PIC_MASTER_REMAP, PIC_CHAINED_REMAP);
+   PIC_remap(PIC_PRIMARY_REMAP, PIC_CHAINED_REMAP);
    idtr.base = (uintptr_t)&IDT[0];
    idtr.limit = (sizeof(IDT) - 1);
 
