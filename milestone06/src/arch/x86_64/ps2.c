@@ -30,14 +30,14 @@ uint8_t ps2_poll_read(uint16_t port){
    return inb(port);
 }
 
-int8_t ps2_read(uint16_t port){
-   uint8_t status = inb(PS2_STATUS);
+int16_t ps2_read(uint16_t port){
+   uint16_t status = inb(PS2_STATUS);
 
+   // If there was a key pressed return key code
    if (status & PS2_STATUS_OUTPUT)
       return inb(port);
    else
       return -1;
-
 }
 
 

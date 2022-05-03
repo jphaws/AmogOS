@@ -248,9 +248,10 @@ void modify_state(uint8_t code){
 }
 
 void keyboard_read(int irq, int err, void *data){
-   int8_t code;
+   int16_t code;
    code = ps2_read(PS2_DATA);
 
+   // Nothing read from buffer
    if (code < 0)
       return;
 
