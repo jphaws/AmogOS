@@ -1,15 +1,17 @@
 #include "gdt.h"
-#include "stdint-gcc.h"
 #include "inline.h"
 #include "commonlib.h"
+#include "commonio.h"
 
 #define TSS_64_BIT 0x9
 #define STACK_SIZE 4096
+#define TSS_GDT_OFFSET 0x2
 
 #define PF_INDEX 1
 #define DF_INDEX 2
 #define GP_INDEX 3
 
+//  External assembly function
 extern void reloadSegments();
 
 struct TSS {
@@ -80,7 +82,7 @@ static uint8_t *tss_stack_gp[STACK_SIZE];
 static uint8_t *tss_stack_df[STACK_SIZE];
 static uint8_t *tss_stack_pf[STACK_SIZE];
 
-void initialize_gdt(void){
+extern void initialize_gdt(void){
    memset(&GDT, 0, sizeof(GDT));
 
    // null entry set to all 0
@@ -104,11 +106,38 @@ void initialize_gdt(void){
 
    //load the updated GDT
    lgdt(&GDT, sizeof (GDT));
+   // load the updated code segment (assembly function)
    reloadSegments();
+
+   printk("GDT Initialized\n");
 }
 
-void initialize_tss(void){
+// Initialization function to set Task State Segment to support seperate 
+// stacks for General Protection Faults, Double Faults, & Page Faults
+extern void initialize_tss(void){
+   // Point TSS Interrupt Stack Tables to new stack locations
    TSS.ist[GP_INDEX] = (uint64_t) &(tss_stack_gp[STACK_SIZE - 1]);
    TSS.ist[DF_INDEX] = (uint64_t) &(tss_stack_df[STACK_SIZE - 1]);
    TSS.ist[PF_INDEX] = (uint64_t) &(tss_stack_pf[STACK_SIZE - 1]);
+
+   //Load the new TSS
+   ltr(TSS_GDT_OFFSET);
+
+   printk("TSS Initialized\n");
 }
+
+// Returns TSS Interrupt Stack Table Offset for use when setting the IDT
+extern uint8_t get_DF_stack_offset(void){
+   return DF_INDEX;
+}
+
+// Returns TSS Interrupt Stack Table Offset for use when setting the IDT
+extern uint8_t get_GP_stack_offset(void){
+   return GP_INDEX;
+}
+
+// Returns TSS Interrupt Stack Table Offset for use when setting the IDT
+extern uint8_t get_PF_stack_offset(void){
+   return PF_INDEX;
+}
+

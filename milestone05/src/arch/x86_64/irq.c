@@ -1,8 +1,10 @@
 #include <stdint-gcc.h>
 #include "isr.h"
 #include "irq.h"
+#include "gdt.h"
 #include "inline.h"
 #include "commonio.h"
+#include "commonlib.h"
 #include "keyboard.h"
 
 #define PIC1		0x20		/* IO base address for primary PIC */
@@ -15,22 +17,21 @@
 #define PIC_EOI		0x20		/* End-of-interrupt command code */
 #define PIC_PRIMARY_REMAP 0x20
 #define PIC_CHAINED_REMAP 0x28
+#define PIC_MAX_INTERRUPT 0x2F
+#define NUM_PIC_INTERRUPTS 16
+#define INT_KB 1
 
 #define ICW1_ICW4	0x01		/* ICW4 (not) needed */
-#define ICW1_SINGLE	0x02		/* Single (cascade) mode */
-#define ICW1_INTERVAL4	0x04		/* Call address interval 4 (8) */
-#define ICW1_LEVEL	0x08		/* Level triggered (edge) mode */
 #define ICW1_INIT	0x10		/* Initialization - required! */
-
 #define ICW4_8086	0x01		/* 8086/88 (MCS-80/85) mode */
-#define ICW4_AUTO	0x02		/* Auto (normal) EOI */
-#define ICW4_BUF_CHAINED	0x08		/* Buffered mode/chained */
-#define ICW4_BUF_PRIMARY	0x0C		/* Buffered mode/primary*/
-#define ICW4_SFNM	0x10		/* Special fully nested (not) */
 
 #define IDT_TABLE_SIZE 256
 #define IDT_INTERRUPT_GATE 0xE
 #define GDT_OFFSET_KERNEL_CODE 0x8
+
+#define DF_EXCEPTION_NUM 0x8
+#define GP_EXCEPTION_NUM 0xD
+#define PF_EXCEPTION_NUM 0xE
 
 struct IDT_Entry{
    uint16_t target_offset_lower; // Address of Interrupt Service Routine (3 parts)
@@ -51,32 +52,35 @@ struct IDT_Entry{
    uint32_t reserved_32;
 }__attribute__((packed));
 
-typedef struct {
-	uint16_t	limit;
-	uint64_t	base;
-} __attribute__((packed)) idtr_t;
+
+struct IRQ_handler_entry {
+    irq_handler_t function;
+    void *data;
+};
 
 extern int IRQ_get_mask(int irq);
-
-extern void IRQ_set_mask(int irq);
-extern void IRQ_clear_mask(int irq);
-extern void IRQ_end_of_interrupt(int irq);
-void PIC_remap(int offset1, int offset2);
-void PIC_sendEOI(unsigned char irq);
-
-typedef void (*irq_handler_t)(int, int, void*);
-extern void IRQ_set_handler(int irq, irq_handler_t handler, void *arg);
+static void PIC_remap(int offset1, int offset2);
 
 static struct IDT_Entry IDT[IDT_TABLE_SIZE];
-static idtr_t idtr;
+struct IRQ_handler_entry irq_handlers[IDT_TABLE_SIZE];
 
 extern void IRQ_init(void){
    CLI
-   IRQ_set_mask(0);
-   PIC_remap(PIC_PRIMARY_REMAP, PIC_CHAINED_REMAP);
-   idtr.base = (uintptr_t)&IDT[0];
-   idtr.limit = (sizeof(IDT) - 1);
 
+   memset(irq_handlers, 0, sizeof(irq_handlers));
+   memset(IDT, 0, sizeof(IDT));
+
+   // Disable PIC interrupts
+   for (int i = 0; i < NUM_PIC_INTERRUPTS; ++i)
+      IRQ_set_mask(i);
+
+   // Remap PIC interrupts from Intel reserved to new numbers
+   PIC_remap(PIC_PRIMARY_REMAP, PIC_CHAINED_REMAP);
+
+   // Re-enable keyboard interrupts
+   IRQ_clear_mask(INT_KB);
+
+   // Fill in Interrupt Descriptor Table
    for (int i = 0; i < IDT_TABLE_SIZE; i++){
       struct IDT_Entry *descriptor = &IDT[i];
       uint64_t isr_ptr = (uint64_t)isr_fun_ptrs[i];
@@ -91,27 +95,29 @@ extern void IRQ_init(void){
       descriptor->target_offset_mid = ((uint64_t)isr_ptr >> 16) & 0xFFFF;
       descriptor->target_offset_upper = ((uint64_t)isr_ptr >> 32) & 0xFFFFFFFF;
       descriptor->reserved_32 = 0;
+
    }
 
-   lidt(&IDT[0], sizeof(IDT) - 1);        // load the new IDT
+   // Set DF, GP, & PF interrupts to run on seperate stacks
+   IDT[DF_EXCEPTION_NUM].ist = get_DF_stack_offset();
+   IDT[GP_EXCEPTION_NUM].ist = get_GP_stack_offset();
+   IDT[PF_EXCEPTION_NUM].ist = get_PF_stack_offset();
+
+   // load the new Interrupt Descriptor Table
+   lidt(&IDT[0], sizeof(IDT) - 1); 
    STI
+   printk("IRQ Initialized\n");
 }
 
-void PIC_sendEOI(unsigned char irq){
-	if(irq >= 8)
-		outb(PIC2_COMMAND,PIC_EOI);
- 
-	outb(PIC1_COMMAND,PIC_EOI);
-}
-
-
-void IRQ_end_of_interrupt(int irq){
+// Must be called at the end of PIC interrupts to ACK interrupt
+extern void IRQ_end_of_interrupt(int irq){
 	if(irq >= 8)
 		outb(PIC2_COMMAND,PIC_EOI);
 
 	outb(PIC1_COMMAND,PIC_EOI);
 }
 
+// Used to disable specific interrupts
 extern void IRQ_set_mask(int irq) {
     uint16_t port;
     uint8_t value;
@@ -126,6 +132,7 @@ extern void IRQ_set_mask(int irq) {
     outb(port, value);
 }
 
+// Used to re-enable diabled interrupts
 extern void IRQ_clear_mask(int irq) {
     uint16_t port;
     uint8_t value;
@@ -148,7 +155,7 @@ arguments:
 		vectors on the primary become offset1..offset1+7
 	offset2 - same for chained PIC: offset2..offset2+7
 */
-void PIC_remap(int offset1, int offset2){
+static void PIC_remap(int offset1, int offset2){
 	unsigned char a1, a2;
 
 	a1 = inb(PIC1_DATA);                        // save masks
@@ -176,14 +183,23 @@ void PIC_remap(int offset1, int offset2){
 	outb(PIC2_DATA, a2);
 }
 
-extern void exception_handler(int isr_num, int err_code) {
-   if (isr_num == 0x21){
-      keyboard_read();
+// used to set a function handler for a specific interrupt
+extern void IRQ_set_handler(int irq, irq_handler_t handler, void *arg){
+   if (irq < IDT_TABLE_SIZE && irq >= 0){
+      irq_handlers[irq].function = handler;
+      irq_handlers[irq].data = arg;
    }
-   else{
-      printk("Encountered exception #%d (Error code 0x%x). :()\n", isr_num, err_code);
-      __asm__ volatile ("cli; hlt"); // Completely hangs the computer
-   }
-   PIC_sendEOI(isr_num);
 }
 
+// exception_handler gets called from assembly ISRs
+extern void exception_handler(int isr_num, int err_code) {
+   if (irq_handlers[isr_num].function != 0){
+      irq_handlers[isr_num].function(isr_num, err_code, irq_handlers[isr_num].data);
+   }
+   else{
+      printk("Encountered exception #%d (Error code 0x%x) :(\n", isr_num, err_code);
+      __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+   }
+   if (isr_num >= PIC_PRIMARY_REMAP && isr_num <= PIC_MAX_INTERRUPT)
+      IRQ_end_of_interrupt(isr_num);
+}

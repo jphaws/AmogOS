@@ -7,6 +7,7 @@
 #define CLI __asm__ volatile ("cli");        // used to disable interrupts
 #define STI __asm__ volatile ("sti");        // used to enable interrupts
 
+// Used to load a new Global Descriptor Table
 static inline void lgdt(void *base, uint16_t size){
    struct {
       uint16_t length;
@@ -19,8 +20,9 @@ static inline void lgdt(void *base, uint16_t size){
    asm ("lgdt %0" : : "m"(GDTR));
 }
 
-static inline void lidt(void* base, uint16_t size)
-{   // This function works in 32 and 64bit mode
+// Used to load a new Interrupt Descriptor Table
+static inline void lidt(void* base, uint16_t size){   
+   // This function works in 32 and 64bit mode
     struct {
         uint16_t length;
         void*    base;
@@ -29,10 +31,18 @@ static inline void lidt(void* base, uint16_t size)
     asm ( "lidt %0" : : "m"(IDTR) );  // let the compiler choose an addressing mode
 }
 
+// Used to reload a new TSS using the TSS Descriptor in the GDT
+static inline void ltr(uint16_t offset){
+   // offset is the index of the TSS entry in the GDT
+   asm ("ltr %0" : : "Nd"(offset));
+}
+
+// Port based IO write
 static inline void outb(uint16_t port, uint8_t val){
    asm volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
+// Port based IO read
 static inline uint8_t inb(uint16_t port){
    uint8_t ret;
    asm volatile ("inb %1, %0"
