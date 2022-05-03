@@ -133,18 +133,18 @@ char scan_codes_shift_caps[] = {
 void reset_keyboard(void){
    uint8_t test;
 
-   printk("Begin keyboard reset:\n");
+   // printk("Begin keyboard reset:\n");
    do{
       ps2_poll_write(PS2_DATA, KEYBOARD_RESET);
 
       // Receive ACK
       test = ps2_poll_read(PS2_DATA);
-      printk("   keyboard reset byte received: 0x%x\n", test);
+      // printk("   keyboard reset byte received: 0x%x\n", test);
    }while(test != KEYBOARD_ACK);
 
    // Receive success or failure byte
    test = ps2_poll_read(PS2_DATA);
-   printk("   keyboard reset byte received: 0x%x\n", test);
+   // printk("   keyboard reset byte received: 0x%x\n", test);
 
    if (test != KEYBOARD_RESET_SUCCESS){
       printk("Keyboard reset failed!\n");
@@ -155,11 +155,11 @@ void reset_keyboard(void){
 void set_scan_code(void){
    uint8_t response;
    
-   printk("Begin setting scan code 2\n");
+   // printk("Begin setting scan code 2\n");
 
    do {
 
-      printk("   enter scan code command\n");
+      // printk("   enter scan code command\n");
       ps2_poll_write(PS2_DATA, KEYBOARD_SCAN_CODE);
 
       response = ps2_poll_read(PS2_DATA);
@@ -167,7 +167,7 @@ void set_scan_code(void){
 
    do {
 
-      printk("   set scan code 2\n");
+      // printk("   set scan code 2\n");
       ps2_poll_write(PS2_DATA, KEYBOARD_SET_SCAN_CODE_SET);
 
       response = ps2_poll_read(PS2_DATA);
@@ -175,7 +175,7 @@ void set_scan_code(void){
 
    do {
 
-      printk("   enter scan code command\n");
+      // printk("   enter scan code command\n");
       ps2_poll_write(PS2_DATA, KEYBOARD_SCAN_CODE);
 
       response = ps2_poll_read(PS2_DATA);
@@ -183,21 +183,21 @@ void set_scan_code(void){
 
    do {
 
-      printk("   reading current scan code\n");
+      // printk("   reading current scan code\n");
       ps2_poll_write(PS2_DATA, 0);
 
       response = ps2_poll_read(PS2_DATA);
    } while (response != KEYBOARD_ACK); 
 
    response = ps2_poll_read(PS2_DATA);
-   printk("   Keyboard is using scancode: 0x%x\n", response);
+   // printk("   Keyboard is using scancode: 0x%x\n", response);
 
 }
 
 void enable_keyboard(void){
    uint8_t response;
 
-   printk("Begin enable keyboard scanning\n");
+   // printk("Begin enable keyboard scanning\n");
 
    do {
       ps2_poll_write(PS2_DATA, KEYBOARD_ENABLE_SCANNING);
@@ -212,11 +212,10 @@ void enable_keyboard(void){
  * See the OS Dev Wiki for more information
  */
 void initialize_keyboard(void){
-   printk("Begin keyboard initialization\n");
    reset_keyboard();
    set_scan_code();
    enable_keyboard();
-   printk("Finished keyboard initialization\n");
+   printk("Keyboard Initialized\n");
 }
 
 void modify_state(uint8_t code){
@@ -248,7 +247,7 @@ void modify_state(uint8_t code){
    }
 }
 
-void keyboard_read(void){
+void keyboard_read(int irq, int err, void *data){
    uint8_t code;
    code = ps2_poll_read(PS2_DATA);
 
