@@ -248,8 +248,11 @@ void modify_state(uint8_t code){
 }
 
 void keyboard_read(int irq, int err, void *data){
-   uint8_t code;
-   code = ps2_poll_read(PS2_DATA);
+   int8_t code;
+   code = ps2_read(PS2_DATA);
+
+   if (code < 0)
+      return;
 
    modify_state(code);
 
