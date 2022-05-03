@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #define VGA_BASE 0xb8000
+#define VGA_WIDTH 80
 
 enum VGA_COLORS {VGA_BLACK, VGA_BLUE, VGA_GREEN, VGA_CYAN, VGA_RED, 
    VGA_MAGENTA, VGA_BROWN, VGA_LIGHT_GREY, VGA_DARK_GREY, VGA_LIGHT_BLUE, 
@@ -16,12 +17,13 @@ enum VGA_COLORS {VGA_BLACK, VGA_BLUE, VGA_GREEN, VGA_CYAN, VGA_RED,
 
 
 static uint16_t *vgaBuff = (unsigned short*)VGA_BASE;
-static int width = 80;
-static int height = 25;
+static const int width = 80;
+static const int height = 25;
 static int cursor = 0;
 static unsigned char color = FG(VGA_LIGHT_GREY) | BG(VGA_BLACK);
 
-void scroll(void);
+static void scroll(void);
+static void update_cursor(int x, int y);
 
 #define LINE(cur) (cur) / (width)
 
@@ -61,7 +63,21 @@ void VGA_display_str(const char *str){
    }
 }
 
-void scroll(){
+void VGA_update_cursor(){
+   update_cursor(cursor % VGA_WIDTH, cursor / VGA_WIDTH);
+}
+
+
+static void update_cursor(int x, int y){
+	uint16_t pos = y * VGA_WIDTH + x;
+ 
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+static void scroll(){
    for (int i = 0; i < (width * (height - 1)); i++){
       vgaBuff[i] = vgaBuff[i + width];
    }

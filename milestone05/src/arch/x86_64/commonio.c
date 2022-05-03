@@ -105,6 +105,7 @@ int printk(const char *fmt, ...){
       i++;
    }
    va_end(va);
+   VGA_update_cursor();
    return i;
 }
 
