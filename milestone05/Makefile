@@ -25,7 +25,7 @@ run-iso: $(iso)
 
 # Requries root to build fat32
 run-fat32: $(fat32)
-			@qemu-system-x86_64 -s -drive format=raw,file=$(fat32) -serial stdio
+			@qemu-system-x86_64 -s -drive format=raw,file=$(fat32) -serial stdio 
 
 fat32: $(fat32)
 
