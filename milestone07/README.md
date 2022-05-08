@@ -22,7 +22,7 @@ This step is a precursor to implementing memory management, as any memory manage
 
 You will need two main references for this task. The first is the [multiboot specification.](http://nongnu.askapache.com/grub/phcoder/multiboot.pdf) The specification lists the exact structure of the tags and details how they tags are passed into the OS. From the tags you need to extract the list of physical memory regions and the location of the ELF section headers. You will need to store the memory regions in an efficient data structure for use by your memory manager.
 
-The second reference you need is the ELF format description. This tells you the format of the ELF section header. The ELF section header contains information on which parts of memory your kernel is currently using. It is very important to avoid avoid allocating this kernel memory to any other kernel tasks or user level processes.
+The second reference you need is the [ELF format description.](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) This tells you the format of the ELF section header. The ELF section header contains information on which parts of memory your kernel is currently using. It is very important to avoid avoid allocating this kernel memory to any other kernel tasks or user level processes.
 
 A more detailed list of steps for this milestone is:
 
