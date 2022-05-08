@@ -21,11 +21,11 @@ clean:
 			@rm -r build 2> /dev/null || true
 
 run-iso: $(iso)
-			@qemu-system-x86_64 -cdrom $(iso)
+			@qemu-system-x86_64 -cdrom $(iso) -serial stdio
 
 # Requries root to build fat32
 run-fat32: $(fat32)
-			@qemu-system-x86_64 -s -drive format=raw,file=$(fat32) -serial stdio 
+			@qemu-system-x86_64 -s -drive format=raw,file=$(fat32) -serial stdio
 
 fat32: $(fat32)
 

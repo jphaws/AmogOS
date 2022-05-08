@@ -20,6 +20,7 @@
 #define PIC_MAX_INTERRUPT 0x2F
 #define NUM_PIC_INTERRUPTS 16
 #define INT_KB 1
+#define INT_SERIAL 4
 
 #define ICW1_ICW4	0x01		/* ICW4 (not) needed */
 #define ICW1_INIT	0x10		/* Initialization - required! */
@@ -67,7 +68,7 @@ struct IRQ_handler_entry irq_handlers[IDT_TABLE_SIZE];
 extern void IRQ_init(void){
    CLI
 
-   memset(irq_handlers, 0, sizeof(irq_handlers));
+   // memset(irq_handlers, 0, sizeof(irq_handlers));
    memset(IDT, 0, sizeof(IDT));
 
    // Disable PIC interrupts
@@ -79,6 +80,9 @@ extern void IRQ_init(void){
 
    // Re-enable keyboard interrupts
    IRQ_clear_mask(INT_KB);
+
+   // Re-enable serial interrupts (COM1)
+   IRQ_clear_mask(INT_SERIAL);
 
    // Fill in Interrupt Descriptor Table
    for (int i = 0; i < IDT_TABLE_SIZE; i++){
@@ -202,4 +206,6 @@ extern void exception_handler(int isr_num, int err_code) {
    }
    if (isr_num >= PIC_PRIMARY_REMAP && isr_num <= PIC_MAX_INTERRUPT)
       IRQ_end_of_interrupt(isr_num);
+   if (isr_num == INT_SERIAL)
+      printk("Serial Interrupt\n");
 }

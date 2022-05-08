@@ -1,6 +1,8 @@
 #include <stdarg.h>
+#include "commonlib.h"
 #include "vga.h"
 #include "commonlib.h"
+#include "serial.h"
 
 void print_percent(void);                             //done
 void print_int(int i);                                //done
@@ -101,6 +103,7 @@ int printk(const char *fmt, ...){
       }
       else{
          VGA_display_char(fmt[i]);
+         SER_write(&fmt[i], 1);
       }
       i++;
    }
@@ -115,6 +118,7 @@ int printk(const char *fmt, ...){
  */
 void print_percent(void){
    VGA_display_char('%');
+   SER_write("%", 1);
 }
 
 /* 
@@ -124,6 +128,7 @@ void print_int(int i){
    char str[12];           // -2147483648 -> 2147483647
    itoa(i, str);
    VGA_display_str((const char*)str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -133,6 +138,7 @@ void print_uint(unsigned char u){
    char str[11];
    utoa(u, str);
    VGA_display_str((const char*)str);
+   SER_write((const char*)str, strlen(str));
 }
 
 
@@ -143,6 +149,7 @@ void print_unsigned_hexadecimal(unsigned int x){
    char str[9];         // 0x0 -> 0xFFFFFFFF (doesn't store 0x)
    itohex(x, str);
    VGA_display_str(str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -150,6 +157,7 @@ void print_unsigned_hexadecimal(unsigned int x){
  */
 void print_char(char c){
    VGA_display_char(c);
+   SER_write(&c, 1);
 }
 
 /* 
@@ -161,6 +169,7 @@ void print_pointer(void *ptr){
    str[1] = 'x';
    ltohex((unsigned long)&ptr, str+2);
    VGA_display_str(str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -170,6 +179,7 @@ void print_short(short h){
    char str[7];            // -32768 -> 32767
    htoa(h, str);
    VGA_display_str((const char*) str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -179,6 +189,7 @@ void print_ushort(short h){
    char str[7];            // 0 -> 65535
    hutoa(h, str);
    VGA_display_str((const char*) str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -188,6 +199,7 @@ void print_xshort(short h){
    char str[5];            // 0 -> 0xFFFF
    hutoa(h, str);
    VGA_display_str((const char*) str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -197,6 +209,7 @@ void print_long(long v){
    char str[21];           // -9223372036854775808 -> 9223372036854775807 	
    ltoa(v, str);
    VGA_display_str((const char*) str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -206,6 +219,7 @@ void print_ulong(unsigned long v){
    char str[21];           // 0 -> 18446744073709551615 	
    lutoa(v, str);
    VGA_display_str((const char*) str);
+   SER_write((const char*)str, strlen(str));
 }
 
 /* 
@@ -215,6 +229,7 @@ void print_xlong(unsigned long v){
    char str[17];           // 0 -> 0xFFFFFFFFFFFFFFFF
    ltohex(v, str);
    VGA_display_str((const char*) str);
+   SER_write((const char*)str, strlen(str));
 }
 
 
@@ -244,4 +259,5 @@ void print_xlong_long(unsigned long long v){
  */
 void print_str(const char *s){
    VGA_display_str(s);
+   SER_write((const char*)s, strlen(s));
 }

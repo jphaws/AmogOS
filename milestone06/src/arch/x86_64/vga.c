@@ -34,9 +34,9 @@ void VGA_clear(void){
 }
 
 void VGA_display_char(char c){
-   bool enable_ints = 0;
-   if (are_interrupts_enabled())
-      STI
+   bool enable_ints = are_interrupts_enabled();
+   if (enable_ints)
+      CLI
 
    if (c == '\n') {
       cursor = (LINE(cursor) + 1) * width;
@@ -57,7 +57,7 @@ void VGA_display_char(char c){
    }
 
    if (enable_ints)
-      CLI
+      STI
 }
 
 void VGA_display_str(const char *str){
