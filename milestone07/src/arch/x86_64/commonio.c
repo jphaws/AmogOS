@@ -167,9 +167,9 @@ void print_pointer(void *ptr){
    char str[19];         // 0x0 -> 0xFFFFFFFF
    str[0] = '0';
    str[1] = 'x';
-   ltohex((unsigned long)&ptr, str+2);
-   VGA_display_str(str);
+   ltohex((unsigned long)ptr, str+2);
    SER_write((const char*)str, strlen(str));
+   VGA_display_str(str);
 }
 
 /* 

@@ -11,5 +11,6 @@ long_mode_start:
     mov fs, ax
     mov gs, ax
 
+    pop rdi
     call kmain
     hlt

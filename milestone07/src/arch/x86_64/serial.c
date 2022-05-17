@@ -33,7 +33,6 @@ extern void SER_handler(int interrupt_num, int error_code, void *arg){
 
    else if ((interrupt & IIR_TX_INT) == IIR_TX_INT)
       start_tx();
-   // printk("Serial interrupt\n");
 }
 
 extern int SER_write(const char *buff, int len){
@@ -42,7 +41,7 @@ extern int SER_write(const char *buff, int len){
    if (interrupts)
       CLI
 
-   while (! buff_full() && i < len)
+   while (! buff_full() && i < len && buff[i] != '\0')
       BB_enqueue(&state, buff[i++]);
 
    if (! buff_empty() && tx_idle())
@@ -50,7 +49,7 @@ extern int SER_write(const char *buff, int len){
 
    if (interrupts)
       STI
-   // printk("SER_write\n");
+
    return i;
 }
 
@@ -95,7 +94,7 @@ static void start_tx(void){
       char c = BB_dequeue(&state);
       outb(SER_PORT_COM1, c);
    }
-   // update_config()??
+
    if (interrupts)
       STI
 }
