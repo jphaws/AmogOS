@@ -50,7 +50,6 @@ extern int SER_write(const char *buff, int len){
 
    if (interrupts)
       STI
-   // printk("SER_write\n");
    return i;
 }
 
