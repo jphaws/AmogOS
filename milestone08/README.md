@@ -19,16 +19,16 @@ In this milestone you will add basic virtual address support to the kernel. This
 
    2. Once you have designed your virtual address space you need to create a few functions to manipulate the page table. You have some flexibility in the exact functions you pick, however you will code that can walk the multi-level page table, allocate new parts of the page table structure as needed, and finally return the address of an entry for a particular virtual address. Note that the page table structure itself uses physical addresses internally, not virtual addresses. One of the input parameters to your functions should be the a pointer to the page table structure to operate on. This will make allocation and modification of address spaces simpler when you have more than one virtual address space.
 
-    After completing the page table helper function add functions that allocate and free virtual pages from the kernel heap. You are free to name these function as you see fit. Sample function declarations are:
+      After completing the page table helper function add functions that allocate and free virtual pages from the kernel heap. You are free to name these function as you see fit. Sample function declarations are:
+   
+      ```C
+      extern void *MMU_alloc_page();
+      extern void *MMU_alloc_pages(int num);
+      extern void MMU_free_page(void *);
+      extern void MMU_free_pages(void *, int num);
+      ```
 
-   ```C
-   extern void *MMU_alloc_page();
-   extern void *MMU_alloc_pages(int num);
-   extern void MMU_free_page(void *);
-   extern void MMU_free_pages(void *, int num);
-   ```
-
-    Remember that all these functions deal in virtual addresses.
+      Remember that all these functions deal in virtual addresses.
 
    3. Implement a page fault handler. You have one of two options here. The first option is less work. The second is slightly more work but will result in a substantial reduction in memory use from your OS:
       1. Print out an error message and HLT for every unhandled page fault. The error message must include the address that caused the fault (stored in CR2), the page table that is in use (store in CR3), and the fault code (passed in as a parameter to the ISR). This will really help with debugging memory problems.
