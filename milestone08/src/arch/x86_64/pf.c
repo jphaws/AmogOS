@@ -3,7 +3,6 @@
 #include <stddef.h>
 
 #define PF_STATIC_ENTRIES_MAX 64
-#define PAGE_SIZE 4096
 
 #define CEILING(N,C) (((N) / (C) + ((N) % (C) != 0)) * (C))
 #define FLOOR(N, C) ((N) / (C) * (C))
@@ -20,6 +19,8 @@ static uint8_t num_avoid_segments = 0;
 
 static uint64_t *freed = NULL;
 static uint64_t *head = NULL;
+
+static uint64_t high_memory_addr = 0;
 
 extern void update_starts(uint64_t addr, uint64_t length){
    if ((num_usable_segments + 1) < PF_STATIC_ENTRIES_MAX){
@@ -92,6 +93,7 @@ extern void initialize_pf(){
    start = start_addrs[0];
    start_idx = 0;
    head = (uint64_t*)start;
+   high_memory_addr = CEILING(high, PAGE_SIZE);
    printk("Page frame allocator Initalized\n");
 }
 
@@ -141,4 +143,8 @@ extern void *MMU_pf_alloc(void){
       return NULL;
 
    return ret;
+}
+
+extern uint64_t get_high_memory(){
+   return high_memory_addr;
 }
