@@ -9,6 +9,7 @@
 #include "inline.h"
 #include "multiboot.h"
 #include "pf.h"
+#include "vmem.h"
 
 #define DEBUG 0
 #define KB_INT_NUM 0x21
@@ -92,6 +93,8 @@ void kmain(void *multiboot_ptr){
    }
 
    printk("Test 2 passed!\n");
+
+   init_virtual_memory();
 
    while(1){
       __asm__ volatile("hlt");

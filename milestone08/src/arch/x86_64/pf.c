@@ -145,6 +145,3 @@ extern void *MMU_pf_alloc(void){
    return ret;
 }
 
-extern uint64_t get_high_memory(){
-   return high_memory_addr;
-}

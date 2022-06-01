@@ -85,6 +85,8 @@ struct mb_tag_9{        // ELF Symbols
    struct section_header sec_header[];
 }__attribute__ ((packed));
 
+static uint64_t high_memory_addr = 0;
+
 static uint64_t align8(uint32_t size){
    uint8_t rem = size % 8;
    if (rem != 0)
@@ -153,11 +155,15 @@ extern void initialize_multiboot(void *multiboot_ptr){
             for (int i = 0; i < ((memory_map->tag_size - sizeof(struct mb_tag_6)) / sizeof(struct mem_info_ent)); i++){
                struct mem_info_ent *ent = (struct mem_info_ent*)(memory_map->mem_info + i);
                if (ent->type == 1){
+                  uint64_t temp_high;
                   // printk("   Memory Info Entry: %p\n", ent);
                   // printk("      \t starting address: 0x%lx\n", ent->start_addr);
                   // printk("      \t length: 0x%lx\n", ent->length);
                   // printk("      \t type: %u\n", ent->type);
                   update_starts(ent->start_addr, ent->length);
+                  temp_high = ent->start_addr + ent->length;
+                  if (temp_high > high_memory_addr)
+                     high_memory_addr = temp_high;
                }
             }
             break;
@@ -190,4 +196,8 @@ extern void initialize_multiboot(void *multiboot_ptr){
       gen = (struct mb_tag_generic*)(current);
    }
    initialize_pf();
+}
+
+extern uint64_t get_high_memory(){
+   return high_memory_addr;
 }

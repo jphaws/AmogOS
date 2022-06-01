@@ -55,13 +55,27 @@ static inline void io_wait(void){
     outb(0x80, 0);
 }
 
-static inline bool are_interrupts_enabled()
-{
+static inline bool are_interrupts_enabled(){
     unsigned long flags;
     asm volatile ( "pushf\n\t"
                    "pop %0"
                    : "=g"(flags) );
     return flags & (1 << 9);
 }
-                                             //
+
+// used to load a new page table
+static inline void load_new_page_table(uint64_t pml4){
+   asm ("mov %0, %%cr3" :: "r"(pml4));
+}
+
+static inline void wrmsr(uint32_t msr_id, uint64_t msr_value){
+    asm volatile ( "wrmsr" : : "c" (msr_id), "A" (msr_value) );
+}
+
+static inline uint64_t rdmsr(uint32_t msr_id){
+    uint64_t msr_value;
+    asm volatile ( "rdmsr" : "=A" (msr_value) : "c" (msr_id) );
+    return msr_value;
+}
+                                          
 #endif

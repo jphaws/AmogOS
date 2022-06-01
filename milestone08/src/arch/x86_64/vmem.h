@@ -7,6 +7,4 @@ extern void *MMU_alloc_pages(int num);
 extern void MMU_free_page(void *);
 extern void MMU_free_pages(void *, int num);
 
-static void identity_map();
-
 #endif
