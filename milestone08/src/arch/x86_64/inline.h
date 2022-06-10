@@ -55,7 +55,7 @@ static inline void io_wait(void){
     outb(0x80, 0);
 }
 
-static inline bool are_interrupts_enabled(){
+static inline bool are_interrupts_enabled(void){
     unsigned long flags;
     asm volatile ( "pushf\n\t"
                    "pop %0"
@@ -77,5 +77,17 @@ static inline uint64_t rdmsr(uint32_t msr_id){
     asm volatile ( "rdmsr" : "=A" (msr_value) : "c" (msr_id) );
     return msr_value;
 }
-                                          
+
+static inline unsigned long read_cr2(void){
+    unsigned long val;
+    asm volatile ( "mov %%cr2, %0" : "=r"(val) );
+    return val;
+}
+
+static inline unsigned long read_cr3(void){
+    unsigned long val;
+    asm volatile ( "mov %%cr3, %0" : "=r"(val) );
+    return val;
+}
+
 #endif

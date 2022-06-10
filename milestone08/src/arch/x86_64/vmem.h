@@ -6,5 +6,6 @@ extern void *MMU_alloc_page();
 extern void *MMU_alloc_pages(int num);
 extern void MMU_free_page(void *);
 extern void MMU_free_pages(void *, int num);
+extern void PF_handler(int interrupt_num, int error_code, void *arg);
 
 #endif

@@ -6,6 +6,7 @@
 #include "commonio.h"
 #include "commonlib.h"
 #include "keyboard.h"
+#include "serial.h"
 
 #define PIC1		0x20		/* IO base address for primary PIC */
 #define PIC2		0xA0		/* IO base address for chained PIC */
