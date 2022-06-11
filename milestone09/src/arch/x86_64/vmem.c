@@ -135,6 +135,7 @@ extern void init_virtual_memory(){
    // kernel heap at L4[15]
    // set_up_kernel_heap();
    // userspace L4[16+]
+   printk("Virtual Memory Allocator Initialized\n");
 }
 
 static void set_up_kernel_stack(){

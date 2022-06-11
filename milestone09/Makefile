@@ -43,7 +43,7 @@ $(iso): $(kernel) $(grub_cfg)
 			@rm -r build/isofiles
 
 $(kernel): $(assembly_object_files) $(c_object_files) $(linker_script)
-			@/home/jaxon/opt/cross/bin/x86_64-elf-ld -n -T $(linker_script) -o $(kernel) $(assembly_object_files) $(c_object_files)
+			@~/opt/cross/bin/x86_64-elf-ld -n -T $(linker_script) -o $(kernel) $(assembly_object_files) $(c_object_files)
 
 # compile assembly files
 build/arch/$(arch)/%.o: src/arch/$(arch)/%.asm
@@ -52,4 +52,4 @@ build/arch/$(arch)/%.o: src/arch/$(arch)/%.asm
 
 # compile C files
 build/arch/$(arch)/%.o: src/arch/$(arch)/%.c
-			@/home/jaxon/opt/cross/bin/x86_64-elf-gcc -Wall -Werror -c -g -mno-red-zone $< -o $@
+			@~/opt/cross/bin/x86_64-elf-gcc -Wall -Werror -c -g -mno-red-zone $< -o $@
